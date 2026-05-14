@@ -1,0 +1,88 @@
+# ┌─────────────────────────────────────────────┐
+# │         短链接服务 (short-url)               │
+# │         Spring Boot 3.4.3 + JDK 17          │
+# └─────────────────────────────────────────────┘
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: short-url
+
+  # ── 数据源 ──
+  datasource:
+    url: jdbc:mysql://localhost:3306/short_url_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 5000
+
+  # ── JPA ──
+  jpa:
+    hibernate:
+      ddl-auto: update          # 开发阶段用 update; 生产环境改为 validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+  # ── Redis ──
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 123456
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 3000ms
+
+  # ── 启动时自动执行 schema.sql ──
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      continue-on-error: true
+
+# ── 短链接服务配置 ──
+short-url:
+  # 短链接域名（生产环境改为实际域名）
+  domain: http://localhost:8080
+  # 默认过期天数
+  default-expire-days: 90
+  # GeoIP2 数据库路径（可选，不配置则跳过地域解析）
+  geoip2:
+    db-path: ${GEOIP2_DB_PATH:}
+  # 布隆过滤器
+  bloom-filter:
+    expected-insertions: 10000000
+    fpp: 0.001
+  # 访问日志
+  access-log:
+    batch-size: 200
+    flush-interval-ms: 5000
+
+# ── 发号器配置 ──
+id-generator:
+  biz-tag: short_url
+  step: 1000
+
+# ── 日志 ──
+logging:
+  level:
+    root: INFO
+    com.shorturl: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

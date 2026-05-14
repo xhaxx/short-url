@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShortURL - 短链接服务</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ===== Header / Navbar ===== -->
+<header class="header">
+  <div class="container header-inner">
+    <a href="/" class="logo" data-link>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+      <span>ShortURL</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/" class="nav-link" data-link data-active="home">首页</a>
+      <a href="/list" class="nav-link" data-link data-active="list">我的链接</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== Main Content ===== -->
+<main id="app" class="main">
+  <!-- Rendered by JS -->
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2025 ShortURL. 简洁 · 快速 · 可靠</p>
+  </div>
+</footer>
+
+<!-- ===== Toast Container ===== -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ===== Templates (hidden) ===== -->
+<template id="tpl-home">
+  <div class="page-home">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <h1 class="hero-title">缩短你的链接，<span class="gradient-text">传递更多价值</span></h1>
+        <p class="hero-subtitle">快速生成短链接，追踪访问数据，洞悉每一次点击</p>
+        <form id="shorten-form" class="shorten-form">
+          <div class="input-group">
+            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <input type="url" id="long-url-input" class="url-input" placeholder="粘贴长链接到这里..." required autocomplete="off">
+            <div class="expire-selector">
+              <input type="number" id="expire-days-input" class="expire-input" value="90" min="1" max="3650" title="过期天数">
+              <span class="expire-label">天后过期</span>
+            </div>
+            <button type="submit" id="shorten-btn" class="btn btn-primary btn-shorten">
+              <span class="btn-text">缩短</span>
+              <svg class="btn-spinner" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Result Card (hidden by default) -->
+    <section class="container" id="result-section" style="display:none;">
+      <div class="result-card">
+        <div class="result-success-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 class="result-title">短链接已生成</h3>
+        <div class="result-url-row">
+          <input type="text" id="result-url-input" class="result-url-input" readonly>
+          <button id="copy-btn" class="btn btn-secondary btn-copy">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>复制</span>
+          </button>
+          <button id="open-btn" class="btn btn-ghost btn-open">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span>打开</span>
+          </button>
+        </div>
+        <div class="result-meta">
+          <span>原始链接：</span><a id="result-long-url" href="#" target="_blank" class="result-long-link"></a>
+        </div>
+        <div class="result-actions">
+          <a id="result-stats-link" class="btn btn-ghost btn-sm" data-link>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>查看统计</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="container features">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>毫秒级跳转</h3>
+          <p>全球 CDN 加速，302 重定向延迟低于 50ms</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <h3>链接可定制</h3>
+          <p>支持自定义过期时间，灵活管理链接生命周期</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h3>访问统计</h3>
+          <p>实时 PV/UV、地域分布、日趋势图，数据一目了然</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<!-- Stats Page Template -->
+<template id="tpl-stats">
+  <div class="page-stats container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/" data-link>首页</a>
+      <span>/</span>
+      <span>访问统计</span>
+    </div>
+
+    <!-- Header row -->
+    <div class="stats-header">
+      <div>
+        <h1 class="stats-title">访问统计</h1>
+        <p class="stats-code" id="stats-short-code"></p>
+      </div>
+      <div class="stats-header-actions">
+        <select id="stats-days-select" class="select-days">
+          <option value="7">最近 7 天</option>
+          <option value="30" selected>最近 30 天</option>
+          <option value="90">最近 90 天</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="overview-cards" id="overview-cards">
+      <div class="overview-card">
+        <div class="overview-label">总访问量 (PV)</div>
+        <div class="overview-value" id="stat-pv">--</div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">独立访客 (UV)</div>
+        <div class="overview-value" id="stat-uv">--</div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">短码</div>
+        <div class="overview-value overview-code" id="stat-code">--</div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">原始链接</div>
+        <div class="overview-value overview-long-url" id="stat-long-url">--</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3 class="chart-title">每日访问趋势</h3>
+        <div class="chart-wrapper">
+          <canvas id="chart-daily"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3 class="chart-title">地域分布 TOP 10</h3>
+        <div class="chart-wrapper">
+          <canvas id="chart-region"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" id="stats-loading">
+      <div class="spinner"></div>
+      <p>加载统计数据...</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-state" id="stats-error" style="display:none;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      <h3>加载失败</h3>
+      <p id="stats-error-msg"></p>
+      <button class="btn btn-primary" onclick="router.navigate(window.location.pathname)">重试</button>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" id="stats-empty" style="display:none;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      <h3>暂无数据</h3>
+      <p>该短链接暂时没有访问记录</p>
+    </div>
+  </div>
+</template>
+
+<!-- List Page Template -->
+<template id="tpl-list">
+  <div class="page-list container">
+    <div class="breadcrumb">
+      <a href="/" data-link>首页</a>
+      <span>/</span>
+      <span>我的链接</span>
+    </div>
+
+    <h1 class="page-title">我的链接</h1>
+    <p class="page-desc">浏览器的本地历史记录，方便你快速找到之前生成的短链接</p>
+
+    <div id="link-list-container">
+      <div class="empty-state" id="list-empty" style="display:none;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <h3>还没有生成过短链接</h3>
+        <p>回到首页开始创建你的第一个短链接吧</p>
+        <a href="/" class="btn btn-primary" data-link>创建短链接</a>
+      </div>
+      <div class="link-cards" id="link-cards"></div>
+    </div>
+  </div>
+</template>
+
+<!-- ===== Scripts ===== -->
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
